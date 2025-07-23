@@ -98,10 +98,11 @@ def insert_into_table(db, table_name, inferred_types, csv_raw_rows):
 
     db.executemany(sql, params)
 
-def confirm_commits(db):
+def confirm_commits(db, header):
     confirm = input("Confirm changes (Y/N) =>")
 
     if confirm.lower() == "y":
+        print(f"Header: {header}")
         db.commit()
     else:
         print("Returning to main! Commits weren't completed")
@@ -109,10 +110,10 @@ def confirm_commits(db):
 
 def main():
     csv_file = input("Path to csv file =>")
-
     csv_raw_rows = get_list_values_from_table(csv_file)
     
     db_file = input("Path to db file =>")
+    db = Database(db_file)
     
     csv_dict_rows = get_csv_data(csv_file)
 
@@ -124,13 +125,14 @@ def main():
 
     table_name = get_table_name(csv_file)
 
-    db = Database(db_file)
+    
+    db.connect()
 
     create_table(db, table_name, inferred_types, header)
 
     insert_into_table(db, table_name, inferred_types, csv_raw_rows)
 
-    confirm_commits(db)
+    confirm_commits(db, header)
 
     db.close()
 
