@@ -31,7 +31,6 @@ class Database:
         if self.con:
             self.con.close()
 
-# função para converter os tipos do python para tipos sql
 def sqlite_types(val):
     if isinstance(val, int):
         return "INTEGER"
@@ -40,7 +39,6 @@ def sqlite_types(val):
     else:
         return "TEXT"
 
-# funçao para retornar o tipo de variavel que esta no dicionario(valores)
 def get_types(val):
     try:
         return int(val)
@@ -50,11 +48,9 @@ def get_types(val):
         except ValueError:
             return val
 
-# funçao para retornar o nome do arquivo EX: alunos.csv -> alunos
 def get_table_name(csv_path):
     return csv_path.split("/")[-1].split(".")[0]
 
-# funçao que retorna uma lista contendo o conteudo do arquivo .csv
 def get_list_values_from_table(csv_file):
     csv_raw_rows = []
     try:
@@ -67,7 +63,6 @@ def get_list_values_from_table(csv_file):
         print(f"Error: {csv_file} not found")
         return []
 
-# funçao para retornar uma lista de dicionarios contendo o conteudo do arquivo .csv
 def get_csv_data(csv_file):
     data = []
     with open(csv_file, "r", encoding="utf-8") as fp:
@@ -76,7 +71,6 @@ def get_csv_data(csv_file):
             data.append(dict(i))
         return data
 
-# funçao para retornar apenas a segunda linha da tabela
 def get_first_value_from_table(csv_data):
     return list(csv_data[1].values())
 
@@ -117,24 +111,17 @@ def main():
     csv_file = input("Path to csv file =>")
 
     db_file = input("Path to db file =>")
-
-    # alocando os dados do arquivo .csv em um dict
+    
     csv_dict_rows = get_csv_data(csv_file)
-
-    # alocando os dados do arquivo .csv em um list
+  
     csv_raw_rows = get_list_values_from_table(csv_file)
 
-    # pegando o cabeçalho da tabela
     header = list(csv_dict_rows[0].keys())
 
-    #pegando valores da primeira linha para identificaçao
     first_row_values = get_first_value_from_table(csv_dict_rows)
 
-    # pegando a linha da tabela e convertendo para os valores reais
-    # se for (string 22) ele vira apenas (inteiro 22)
     inferred_types = get_inferred_types(first_row_values)
 
-    # pegando nome da tabela
     table_name = get_table_name(csv_file)
 
     db = Database(db_file)
