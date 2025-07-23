@@ -1,46 +1,45 @@
 
-# CSV to SQLite Importer
+# CSV to SQLite Importer (with argparse)
 
-A simple and functional Python script that **converts `.csv` files into a table in a SQLite3 database**, automatically inferring the data types of each column.
+A command-line Python script that imports data from a `.csv` file into a SQLite3 database, **automatically inferring the data types** and allowing you to choose whether or not to confirm the commit.
 
 ## Features
 
-- Automatic connection to a `.db` SQLite database
-- Table creation based on the `.csv` header
+- CLI interface using `argparse`
+- Table creation based on CSV header
 - Automatic data type inference (`INTEGER`, `REAL`, `TEXT`)
-- Data insertion into the table
-- Optional commit confirmation
+- Optional confirmation before committing changes
+- Uses only Python's standard library
 
 ---
 
 ## How to Use
 
-1. **Clone the repository** or copy the `main.py` file.
-
-2. Run with Python 3:
+Run the script with:
 
 ```bash
-python main.py
+python script.py --csv path/to/file.csv --db path/to/database.db
 ```
 
-3. The script will prompt for:
+Optional flag:
 
-- Path to the `.csv` file
-- Path (or name) of the `.db` file
+- `--no-confirm`: skips the commit confirmation prompt and commits directly
 
-Example:
+### Example:
+
+```bash
+python script.py --csv students.csv --db school.db
 ```
-Path to csv file => students.csv
-Path to db file => my_database.db
+
+Or without confirmation prompt:
+
+```bash
+python script.py --csv students.csv --db school.db --no-confirm
 ```
-
-4. It will create a table named `students` and insert the CSV data into it.
-
-5. You can confirm or cancel the insert before the final commit.
 
 ---
 
-## Example Input
+## Example CSV Input
 
 ### File `students.csv`:
 
@@ -51,7 +50,7 @@ Bruno,22,7.8
 Carlos,21,9.0
 ```
 
-### Generated SQL table:
+### Resulting SQL Table:
 
 ```sql
 CREATE TABLE students (
@@ -67,23 +66,22 @@ CREATE TABLE students (
 
 ```
 .
-├── main.py
+├── script.py
 └── students.csv
 ```
-
----
-
-## How It Works
-
-- **Type Inference:** Based on the 2nd row of the CSV, the script tries to convert the data to `int`, `float`, or keeps it as `str`.
-- **Table Name:** Generated from the name of the CSV file.
-- **SQL Commands:** Automatically built from the columns and inferred types.
 
 ---
 
 ## Requirements
 
 - Python 3.x
-- No external libraries (only `sqlite3` and `csv` from the standard library)
+- No external dependencies (uses `sqlite3`, `csv`, and `argparse` from the standard library)
+
+---
+
+## Author
+
+Cauã Augusto  
+Made for learning and practical usage of Python + SQLite via CLI.
 
 ---
