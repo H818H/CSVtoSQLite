@@ -110,11 +110,11 @@ def confirm_commits(db):
 def main():
     csv_file = input("Path to csv file =>")
 
+    csv_raw_rows = get_list_values_from_table(csv_file)
+    
     db_file = input("Path to db file =>")
     
     csv_dict_rows = get_csv_data(csv_file)
-  
-    csv_raw_rows = get_list_values_from_table(csv_file)
 
     header = list(csv_dict_rows[0].keys())
 
