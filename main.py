@@ -1,6 +1,6 @@
 import sqlite3
 import csv
-
+import argparse
 
 class Database:
     def __init__(self, db_file):
@@ -14,12 +14,12 @@ class Database:
 
     def execute(self, sql):
         if not self.cursor:
-            raise RuntimeError("Database was not connected")
+            raise RuntimeError("[x] Error: database was not connected!")
         self.cursor.execute(sql)
 
     def executemany(self, sql, params):
         if not self.cursor:
-            raise RuntimeError("Database was not connected")
+            raise RuntimeError("[x] Error: database was not connected!")
         self.cursor.executemany(sql, params)
 
     def commit(self):
@@ -40,7 +40,7 @@ def sqlite_types(val):
         return "TEXT"
 
 
-def get_types(val):
+def infer_types(val):
     try:
         return int(val)
     except ValueError:
@@ -63,7 +63,7 @@ def get_list_values_from_table(csv_file):
                 csv_raw_rows.append(i)
             return csv_raw_rows
     except FileNotFoundError:
-        print(f"Error: {csv_file} not found")
+        print(f"[x] Error: file '{csv_file}' not found!")
         return None
 
 
@@ -80,10 +80,10 @@ def get_first_value_from_table(csv_data):
     return list(csv_data[1].values())
 
 
-def get_inferred_types(val):
+def infer_types_from_row(val):
     inferred_types = []
     for i in val:
-        t = get_types(i)
+        t = infer_types(i)
         inferred_types.append(t)
     return inferred_types
 
@@ -100,7 +100,7 @@ def create_table(db, table_name, inferred_types, header):
 
 def insert_into_table(db, table_name, inferred_types, csv_raw_rows):
     placeholders = ", ".join(["?"] * len(inferred_types))
-    params = [[get_types(val) for val in linha] for linha in csv_raw_rows[1:]]
+    params = [[infer_types(val) for val in linha] for linha in csv_raw_rows[1:]]
 
     sql = f"INSERT INTO {table_name} VALUES ({placeholders})"
 
@@ -108,27 +108,44 @@ def insert_into_table(db, table_name, inferred_types, csv_raw_rows):
 
 
 def confirm_commits(db, header):
-    confirm = input("Confirm changes (Y/N) =>")
+    confirm = input("[*] Confirm changes (Y/N) =>")
 
     if confirm.lower() == "y":
-        print(f"Header: {header}")
+        print(f"[*] Header: {header}")
         db.commit()
     else:
-        print("Returning to main! Commits weren't completed")
+        print("[*] Commits weren't completed")
 
 
 def main():
-    while True:
-        csv_file = input("Path to csv file =>")
-        csv_raw_rows = get_list_values_from_table(csv_file)
+    parser = argparse.ArgumentParser(
+        description="Import data from csv file to SQLite database, inferring types automatically."
+    )
 
-        if csv_raw_rows:
-            break
-        else:
-            continue
+    parser.add_argument(
+        "--csv", required=True, help="Caminho para o arquivo CSV. Ex: alunos.csv"
+    )
+    parser.add_argument(
+        "--db", required=True, help="Caminho para o arquivo SQLite. Ex: dados.db"
+    )
+    parser.add_argument(
+        "--no-confirm", action="store_true",
+        help="Aplica as mudanças sem pedir confirmação"
+    )
 
-    db_file = input("Path to db file =>")
+    args = parser.parse_args()
+
+    csv_file = args.csv
+    csv_raw_rows = get_list_values_from_table(csv_file)
+    if csv_raw_rows is None:
+        print(f"[x] Error: csv file not found: {csv_file}")
+        return
+
+    db_file = args.db
     db = Database(db_file)
+    db.connect()
+
+    auto_commit = args.no_confirm
 
     csv_dict_rows = get_csv_data(csv_file)
 
@@ -136,20 +153,19 @@ def main():
 
     first_row_values = get_first_value_from_table(csv_dict_rows)
 
-    inferred_types = get_inferred_types(first_row_values)
+    inferred_types = infer_types_from_row(first_row_values)
 
     table_name = get_table_name(csv_file)
 
-    db.connect()
-
     create_table(db, table_name, inferred_types, header)
+    print(f"[+] Table '{table_name}' created in '{db_file}' successfully!")
 
     insert_into_table(db, table_name, inferred_types, csv_raw_rows)
+    print(f"[+] Data inserted into table '{table_name}'!")
 
-    confirm_commits(db, header)
-
+    if auto_commit:
+        db.commit()
+    else:
+        confirm_commits(db, header)
     db.close()
 
-
-if __name__ == "__main__":
-    main()
