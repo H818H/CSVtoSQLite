@@ -26,10 +26,10 @@ class Database:
         if self.con:
             self.con.commit()
 
-
     def close(self):
         if self.con:
             self.con.close()
+
 
 def sqlite_types(val):
     if isinstance(val, int):
@@ -38,6 +38,7 @@ def sqlite_types(val):
         return "REAL"
     else:
         return "TEXT"
+
 
 def get_types(val):
     try:
@@ -48,8 +49,10 @@ def get_types(val):
         except ValueError:
             return val
 
+
 def get_table_name(csv_path):
     return csv_path.split("/")[-1].split(".")[0]
+
 
 def get_list_values_from_table(csv_file):
     csv_raw_rows = []
@@ -61,7 +64,8 @@ def get_list_values_from_table(csv_file):
             return csv_raw_rows
     except FileNotFoundError:
         print(f"Error: {csv_file} not found")
-        return []
+        return None
+
 
 def get_csv_data(csv_file):
     data = []
@@ -71,8 +75,10 @@ def get_csv_data(csv_file):
             data.append(dict(i))
         return data
 
+
 def get_first_value_from_table(csv_data):
     return list(csv_data[1].values())
+
 
 def get_inferred_types(val):
     inferred_types = []
@@ -80,6 +86,7 @@ def get_inferred_types(val):
         t = get_types(i)
         inferred_types.append(t)
     return inferred_types
+
 
 def create_table(db, table_name, inferred_types, header):
     sql_types = [sqlite_types(v) for v in inferred_types]
@@ -90,6 +97,7 @@ def create_table(db, table_name, inferred_types, header):
 
     db.execute(sql)
 
+
 def insert_into_table(db, table_name, inferred_types, csv_raw_rows):
     placeholders = ", ".join(["?"] * len(inferred_types))
     params = [[get_types(val) for val in linha] for linha in csv_raw_rows[1:]]
@@ -97,6 +105,7 @@ def insert_into_table(db, table_name, inferred_types, csv_raw_rows):
     sql = f"INSERT INTO {table_name} VALUES ({placeholders})"
 
     db.executemany(sql, params)
+
 
 def confirm_commits(db, header):
     confirm = input("Confirm changes (Y/N) =>")
@@ -109,12 +118,18 @@ def confirm_commits(db, header):
 
 
 def main():
-    csv_file = input("Path to csv file =>")
-    csv_raw_rows = get_list_values_from_table(csv_file)
-    
+    while True:
+        csv_file = input("Path to csv file =>")
+        csv_raw_rows = get_list_values_from_table(csv_file)
+
+        if csv_raw_rows:
+            break
+        else:
+            continue
+
     db_file = input("Path to db file =>")
     db = Database(db_file)
-    
+
     csv_dict_rows = get_csv_data(csv_file)
 
     header = list(csv_dict_rows[0].keys())
@@ -125,7 +140,6 @@ def main():
 
     table_name = get_table_name(csv_file)
 
-    
     db.connect()
 
     create_table(db, table_name, inferred_types, header)
